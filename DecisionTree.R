@@ -77,3 +77,38 @@ calculate_coefficient_of_variability <- function(y) {
 }
 
 
+# Función para imprimir el árbol de regresión
+print_regression_tree <- function(tree, level = 0, direction = NA, parent_attribute = NA, parent_value = NA, node_number = 1) {
+  # Inicializar un dataframe para almacenar la información del árbol
+  tree_data <- data.frame(Level = integer(), Type = character(), Atributo = character(),
+                          Valor = character(), AVG = numeric(), stringsAsFactors = FALSE)
+  
+  # Obtener nombres de atributos
+  attribute_names <- colnames(X)
+  
+  # Función interna para recorrer el árbol y agregar los nodos al dataframe
+  traverse_tree <- function(tree, level, parent_attribute, parent_value) {
+    if (tree$node_type == "leaf") {
+      leaf_data <- data.frame(Level = level, Type = "Leaf", Atributo = parent_attribute,
+                              Valor = parent_value, AVG = tree$mean_value)
+      tree_data <<- rbind(tree_data, leaf_data)
+    } else {
+      type <- ifelse(level == 0, "Root", "Decision")
+      decision_data <- data.frame(Level = level, Type = type, Atributo = attribute_names[tree$feature],
+                                  Valor = tree$threshold, AVG = NA)
+      tree_data <<- rbind(tree_data, decision_data)
+      # Recorrer nodos izquierdo y derecho de manera recursiva
+      traverse_tree(tree$left, level + 1, attribute_names[tree$feature], tree$threshold)
+      traverse_tree(tree$right, level + 1, attribute_names[tree$feature], tree$threshold)
+    }
+  }
+  
+  # Llamar a la función para construir el dataframe
+  traverse_tree(tree, level, parent_attribute, parent_value)
+  
+  # Ordenar el dataframe por nivel y número de nodo
+  tree_data <- tree_data[order(tree_data$Level), ]
+  
+  # Imprimir el árbol (dataframe)
+  print(tree_data, row.names = FALSE)
+}
